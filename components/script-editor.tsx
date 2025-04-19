@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
-import { PlayCircle, Download, X, Zap } from "lucide-react";
-import { Slider } from "@/components/ui/slider";
-import { useState } from "react";
+import { Button } from '@/components/ui/button';
+import { PlayCircle, Download, X, Zap } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
+import { useState } from 'react';
 
 export function ScriptEditor() {
-  const [speed, setSpeed] = useState(1.0);
+  // const [speed, setSpeed] = useState(1.0);
 
   return (
     <div className="flex-1 overflow-auto">
@@ -23,10 +23,7 @@ export function ScriptEditor() {
         </div>
 
         <div className="space-y-6">
-          <ScriptBlock
-            voice="Giss"
-            text="Are you looking for a digital marketing expert...?"
-          />
+          <ScriptBlock voice="Giss" text="Are you looking for a digital marketing expert...?" />
           <ScriptBlock
             voice="Giss"
             text="Discover social media marketing solutions that will help you grow your online presence!"
@@ -37,13 +34,14 @@ export function ScriptEditor() {
               text="My name is Jiz Mojeha and I represent a team dedicated to deliver concrete results that meets your brand's goals."
               showVoiceOptions
             />
-            <div className="absolute top-0 -right-[400px] w-[380px]">
-              <VoiceOptions />
-            </div>
           </div>
           <ScriptBlock
             voice="Giss"
-            text={`We are committed to:\n- optimizing your social media accounts\n- creating high quality content\n- increasing brand visibility and awareness\nand an endless pool of design services!`}
+            text={`We are committed to:
+            - optimizing your social media accounts
+            - creating high quality content
+            - increasing brand visibility and awareness
+            and an endless pool of design services!`}
           />
           <ScriptBlock
             voice="Giss"
@@ -55,26 +53,33 @@ export function ScriptEditor() {
   );
 }
 
-function ScriptBlock({ voice, text, showVoiceOptions = false }) {
+function ScriptBlock({
+  voice,
+  text,
+  showVoiceOptions = false,
+}: { voice: string; text: string; showVoiceOptions?: boolean }) {
   return (
-    <div className="space-y-4">
-      <div className="flex items-start gap-4">
-        <div className="flex items-center gap-2 min-w-[80px]">
-          <span className="text-emerald-500">◑</span>
-          {voice}
-        </div>
-        <div className="flex-1">
-          <div className="bg-secondary/50 rounded-lg p-4">
-            <div className="flex items-start gap-4">
-              <Button size="icon" variant="ghost" className="mt-1">
-                <PlayCircle className="h-5 w-5" />
-              </Button>
-              <p className="flex-1 whitespace-pre-line">{text}</p>
+    <>
+      {showVoiceOptions && <VoiceOptions />}
+      <div className="space-y-4">
+        <div className="flex items-start gap-4">
+          <div className="flex items-center gap-2 min-w-[80px]">
+            <span className="text-emerald-500">◑</span>
+            {voice}
+          </div>
+          <div className="flex-1">
+            <div className="bg-secondary/50 rounded-lg p-4">
+              <div className="flex items-start gap-4">
+                <Button size="icon" variant="ghost" className="mt-1">
+                  <PlayCircle className="h-5 w-5" />
+                </Button>
+                <p className="flex-1 whitespace-pre-line">{text}</p>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -103,21 +108,17 @@ function VoiceOptions() {
         For faster generations, upgrade your plan.
       </p>
       <p className="text-sm text-muted-foreground mt-2">
-        Each sample is unique. Click on "Regenerate" to create multiple samples and select the one you prefer.
+        Each sample is unique. Click on &quot;Regenerate&quot; to create multiple samples and select
+        the one you prefer.
       </p>
     </div>
   );
 }
 
-function VoiceOption({ label, selected = false }) {
+function VoiceOption({ label, selected = false }: { label: string; selected?: boolean }) {
   return (
     <div className="flex items-center gap-4">
-      <input
-        type="radio"
-        className="w-4 h-4"
-        checked={selected}
-        onChange={() => {}}
-      />
+      <input type="radio" className="w-4 h-4" checked={selected} onChange={() => {}} />
       <div className="flex-1">
         <div className="flex items-center gap-2 mb-2">
           <Button size="icon" variant="ghost">

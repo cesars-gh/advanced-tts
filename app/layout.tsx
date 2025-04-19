@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'Voice Studio - Text to Speech Generator',
-  description: 'Professional text to speech generator with voice cloning capabilities',
+  description: 'Professional text to speech generator with voice cloning capabilities'
 };
 
 export default function RootLayout({

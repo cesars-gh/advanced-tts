@@ -10,22 +10,35 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export function Sidebar() {
+  const pathname = usePathname();
+  
   return (
     <div className="flex h-screen w-[250px] flex-col bg-background border-r">
       <div className="p-6">
         <div className="flex items-center gap-2 mb-8">
           <Cube className="h-8 w-8" />
+          <p className="text-xl font-bold">
+            Advanced TTS
+          </p>
         </div>
         
         <div className="space-y-4">
-          <Button className="w-full justify-start" variant="outline">
-            <FileText className="mr-2 h-4 w-4" />
-            New File
+          <Button 
+            className="w-full justify-start" 
+            variant="outline"
+            asChild
+          >
+            <Link href="/scripts/new">
+              <FileText className="mr-2 h-4 w-4" />
+              New Script
+            </Link>
           </Button>
           
-          <DropdownMenu>
+          {/* <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button className="w-full justify-between" variant="outline">
                 Dialog
@@ -37,22 +50,28 @@ export function Sidebar() {
               <DropdownMenuItem>Video Script</DropdownMenuItem>
               <DropdownMenuItem>Podcast Script</DropdownMenuItem>
             </DropdownMenuContent>
-          </DropdownMenu>
+          </DropdownMenu> */}
 
-          <Button className="w-full justify-start gap-2" variant="outline">
+          {/* <Button className="w-full justify-start gap-2" variant="outline">
             <Mic2 className="h-4 w-4" />
             Create Voice Clone
-          </Button>
+          </Button> */}
         </div>
 
         <nav className="mt-8 space-y-2">
-          <Button variant="ghost" className="w-full justify-start">
-            <FileText className="mr-2 h-4 w-4" />
-            Files
+          <Button 
+            variant={pathname.startsWith('/scripts') ? "default" : "ghost"} 
+            className="w-full justify-start"
+            asChild
+          >
+            <Link href="/scripts">
+              <FileText className="mr-2 h-4 w-4" />
+              Scripts
+            </Link>
           </Button>
           <Button variant="ghost" className="w-full justify-start">
             <Mic2 className="mr-2 h-4 w-4" />
-            Custom Voices
+            Voices
           </Button>
           <Button variant="ghost" className="w-full justify-start">
             <Key className="mr-2 h-4 w-4" />

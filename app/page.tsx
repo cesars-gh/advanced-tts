@@ -1,11 +1,5 @@
-import { Sidebar } from "@/components/sidebar";
-import { ScriptEditor } from "@/components/script-editor";
+import { redirect } from 'next/navigation';
 
 export default function Home() {
-  return (
-    <main className="flex h-screen">
-      <Sidebar />
-      <ScriptEditor />
-    </main>
-  );
+  redirect('/scripts');
 }
