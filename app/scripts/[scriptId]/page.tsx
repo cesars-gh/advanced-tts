@@ -103,8 +103,8 @@ const ScriptHeader = ({ script }: { script: TextScript }) => (
       <p className="text-sm text-muted-foreground">{script.description}</p>
     </div>
     <div className="flex gap-2">
-      <Button variant="outline">Generate All</Button>
-      <Button variant="default">Export</Button>
+      {/* <Button variant="outline">Generate All</Button>
+      <Button variant="default">Export</Button> */}
     </div>
   </div>
 );

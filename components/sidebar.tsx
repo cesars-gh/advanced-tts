@@ -74,13 +74,13 @@ export function Sidebar() {
       </div>
 
       <div className="mt-auto p-6">
-        <Button variant="ghost" className="w-full justify-start">
+        {/* <Button variant="ghost" className="w-full justify-start">
           <Avatar className="h-6 w-6 mr-2">
             <AvatarImage src="https://github.com/shadcn.png" />
             <AvatarFallback>CN</AvatarFallback>
           </Avatar>
           Profile
-        </Button>
+        </Button> */}
       </div>
     </div>
   );
