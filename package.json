@@ -4,13 +4,13 @@
   "private": true,
   "packageManager": "pnpm@9.14.2",
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
-    "start": "next start",
+    "dev": "NODE_OPTIONS=\"--no-deprecation\" next dev --turbopack",
+    "build": "NODE_OPTIONS=\"--no-deprecation\" next build",
+    "start": "NODE_OPTIONS=\"--no-deprecation\" next start",
     "lint": "next lint",
-    "format": "biome format --write .",
-    "lint:biome": "biome lint .",
-    "check": "biome check --apply ."
+    "format": "NODE_OPTIONS=\"--no-deprecation\" biome format --write .",
+    "lint:biome": "NODE_OPTIONS=\"--no-deprecation\" biome lint .",
+    "check": "NODE_OPTIONS=\"--no-deprecation\" biome check --apply ."
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.787.0",
@@ -83,6 +83,7 @@
   "devDependencies": {
     "@types/lodash.debounce": "^4.0.9",
     "@types/react": "19.1.2",
-    "@types/react-dom": "19.1.2"
+    "@types/react-dom": "19.1.2",
+    "biome": "^0.3.3"
   }
 }
