@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { TTSService } from '@/lib/services/tts.service';
 import { Storage } from '@/lib/services/storage';
 
+export const maxDuration = 60;
+
 // Initialize services
 const ttsService = new TTSService();
 const storage = new Storage();
