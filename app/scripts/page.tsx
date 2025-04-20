@@ -5,10 +5,10 @@ import { Sidebar } from '@/components/sidebar';
 import { Button } from '@/components/ui/button';
 import { FileText, PlusCircle } from 'lucide-react';
 import Link from 'next/link';
-import type { Script } from '@/lib/types/script.type';
+import type { TextScript } from '@/lib/types/script.type';
 
 export default function Scripts() {
-  const [scripts, setScripts] = useState<Script[]>([]);
+  const [scripts, setScripts] = useState<TextScript[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -68,8 +68,8 @@ export default function Scripts() {
             <div className="grid gap-4 md:grid-cols-2">
               {scripts.map((script) => (
                 <Link 
-                  key={script.scriptId} 
-                  href={`/scripts/${script.scriptId}`}
+                  key={script.id} 
+                  href={`/scripts/${script.id}`}
                   className="block border p-4 rounded-lg hover:bg-secondary/50 transition-colors"
                 >
                   <h3 className="font-medium text-lg">{script.name}</h3>

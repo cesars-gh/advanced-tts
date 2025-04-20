@@ -3,127 +3,157 @@
 import { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/sidebar';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, PlayCircle, Download } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import type { Script, Section } from '@/lib/types/script.type';
+import type { TextScript } from '@/lib/types/script.type';
 import { useParams, useRouter } from 'next/navigation';
+import { TextScriptBlock, AddNewBlock } from '@/components/script-editor';
+import {
+  TextScriptProvider,
+  useTextScript,
+  type TextScriptBlock as TextScriptBlockType,
+} from '@/components/script-provider';
 
-export default function ScriptView() {
-  const params = useParams();
-  const router = useRouter();
-  const scriptId = params.scriptId as string;
+// Interface for the hook return value
+interface UseScriptReturn {
+  script: TextScript | null;
+  loading: boolean;
+  error: string | null;
+}
 
-  const [script, setScript] = useState<Script | null>(null);
+// Custom hook for fetching script data
+const useFetchScriptData = (scriptId: string): UseScriptReturn => {
+  const [script, setScript] = useState<TextScript | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
-    const loadScript = async () => {
+    const fetchScript = async () => {
       try {
         const response = await fetch(`/api/scripts/${scriptId}`);
-        
+
         if (!response.ok) {
           if (response.status === 404) {
             router.push('/scripts');
             return;
           }
-          throw new Error('Failed to fetch script');
+          throw new Error(`Failed to fetch script: ${response.statusText}`);
         }
-        
-        const data = await response.json();
+
+        const data = (await response.json()) as TextScript;
         setScript(data);
       } catch (error) {
         console.error('Failed to load script:', error);
+        setError(error instanceof Error ? error.message : 'An unknown error occurred');
       } finally {
         setLoading(false);
       }
     };
 
-    loadScript();
+    fetchScript();
   }, [scriptId, router]);
 
-  return (
-    <main className="flex h-screen">
-      <Sidebar />
-      <div className="flex-1 overflow-auto">
-        <div className="max-w-[900px] mx-auto p-6">
-          <div className="mb-6">
-            <Button variant="ghost" asChild className="mb-2">
-              <Link href="/scripts">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Scripts
-              </Link>
-            </Button>
-          </div>
+  return { script, loading, error };
+};
 
-          {loading ? (
-            <div className="flex justify-center p-8">
-              <p>Loading script...</p>
-            </div>
-          ) : script ? (
-            <>
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h1 className="text-2xl font-bold">{script.name}</h1>
-                  <p className="text-sm text-muted-foreground">{script.description}</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="secondary">Generate All</Button>
-                  <Button variant="secondary">Export</Button>
-                </div>
-              </div>
+// Loading and error state components
+const LoadingState = () => (
+  <div className="flex justify-center p-8">
+    <p>Loading script...</p>
+  </div>
+);
 
-              <div className="space-y-6">
-                {script.sections.map((section) => (
-                  <ScriptBlock 
-                    key={section.sectionId}
-                    voice={section.voiceId}
-                    text={section.content}
-                  />
-                ))}
+const ErrorState = ({ message = 'Script not found' }: { message?: string }) => (
+  <div className="flex justify-center p-8">
+    <p>{message}</p>
+  </div>
+);
 
-                {script.sections.length === 0 && (
-                  <div className="flex justify-center p-8 border border-dashed rounded-lg">
-                    <p className="text-muted-foreground">No sections in this script yet.</p>
-                  </div>
-                )}
-              </div>
-            </>
-          ) : (
-            <div className="flex justify-center p-8">
-              <p>Script not found</p>
-            </div>
-          )}
-        </div>
-      </div>
-    </main>
-  );
-}
-
-function ScriptBlock({
-  voice,
-  text,
-}: {
-  voice: string;
-  text: string;
-}) {
-  return (
-    <div className="space-y-4">
-      <div className="flex items-start gap-4">
-        <div className="flex items-center gap-2 min-w-[80px]">
-          <span className="text-emerald-500">◑</span>
-          {voice}
-        </div>
-        <div className="flex-1">
-          <div className="bg-secondary/50 rounded-lg p-4">
-            <div className="flex items-start gap-4">
-              <Button size="icon" variant="ghost" className="mt-1">
-                <PlayCircle className="h-5 w-5" />
-              </Button>
-              <p className="flex-1 whitespace-pre-line">{text}</p>
-            </div>
-          </div>
-        </div>
+// Layout component to maintain consistent page structure
+const PageLayout = ({ children }: { children: React.ReactNode }) => (
+  <main className="flex h-screen">
+    <Sidebar />
+    <div className="flex-1 overflow-auto">
+      <div className="max-w-[900px] mx-auto p-6">
+        <BackButton />
+        {children}
       </div>
     </div>
+  </main>
+);
+
+// Navigation component for the back button
+const BackButton = () => (
+  <div className="mb-6">
+    <Button variant="ghost" asChild className="mb-2">
+      <Link href="/scripts">
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Back to Scripts
+      </Link>
+    </Button>
+  </div>
+);
+
+// Script header with title, description and action buttons
+const ScriptHeader = ({ script }: { script: TextScript }) => (
+  <div className="flex items-center justify-between mb-6">
+    <div>
+      <h1 className="text-2xl font-bold">{script.name}</h1>
+      <p className="text-sm text-muted-foreground">{script.description}</p>
+    </div>
+    <div className="flex gap-2">
+      <Button variant="outline">Generate All</Button>
+      <Button variant="default">Export</Button>
+    </div>
+  </div>
+);
+
+// Display script content or empty message
+const ScriptContent = () => {
+  // Use the context hook to get the blocks
+  const { sections } = useTextScript();
+
+  return (
+    <div className="space-y-6">
+      {/* Map over the blocks from the context state */}
+      {sections.map((block: TextScriptBlockType) => (
+        <TextScriptBlock
+          key={block.id}
+          currentBlock={block}
+        />
+      ))}
+
+      <AddNewBlock />
+    </div>
   );
-} 
+};
+
+export default function ScriptView() {
+  const params = useParams();
+  const scriptId = params.scriptId as string;
+  // Use the renamed fetch hook
+  const { script, loading, error } = useFetchScriptData(scriptId);
+
+  // Render the appropriate content based on the state
+  const renderContent = () => {
+    if (loading) return <LoadingState />;
+    if (error) return <ErrorState message={error} />;
+    if (!script) return <ErrorState />;
+
+    return (
+      // Initialize the provider with the fetched script sections
+      <TextScriptProvider
+        scriptId={scriptId}
+        scriptName={script.name}
+        scriptDescription={script.description}
+        initialBlocks={[...script.sections]}
+      >
+        <ScriptHeader script={script} />
+        <ScriptContent />
+      </TextScriptProvider>
+    );
+  };
+
+  return <PageLayout>{renderContent()}</PageLayout>;
+}

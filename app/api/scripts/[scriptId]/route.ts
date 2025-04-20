@@ -1,15 +1,14 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { ScriptService } from '@/lib/services/script.service';
+import { TextScriptService } from '@/lib/services/text-script.service';
 import type { UpdateScriptDto } from '@/lib/types/script.type';
 
 // Initialize the script service
-let scriptService: ScriptService | null = null;
+let scriptService: TextScriptService | null = null;
 
 const getScriptService = async () => {
   if (!scriptService) {
-    scriptService = new ScriptService();
-    await scriptService.init();
+    scriptService = new TextScriptService();
   }
   return scriptService;
 };
@@ -19,7 +18,7 @@ export async function GET(_request: NextRequest, props: { params: Promise<{ scri
   const params = await props.params;
   try {
     const service = await getScriptService();
-    const script = await service.getScriptById(params.scriptId);
+    const script = await service.getTextScriptById(params.scriptId);
     
     if (!script) {
       return NextResponse.json(

@@ -1,11 +1,11 @@
 export interface Section {
-  sectionId: string;
-  voiceId: string;
-  content: string;
+  id: string;
+  voice: string;
+  text: string;
 }
 
-export interface Script {
-  scriptId: string;
+export interface TextScript {
+  id: string;
   name: string;
   description: string;
   sections: Section[];

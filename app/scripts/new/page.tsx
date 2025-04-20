@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import type { TextScript } from '@/lib/types/script.type';
 
 export default function NewScript() {
   const router = useRouter();
@@ -17,13 +18,13 @@ export default function NewScript() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!name.trim()) {
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
       const response = await fetch('/api/scripts', {
         method: 'POST',
@@ -35,13 +36,13 @@ export default function NewScript() {
           description,
         }),
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to create script');
       }
-      
-      const newScript = await response.json();
-      router.push(`/scripts/${newScript.scriptId}`);
+
+      const newScript = (await response.json()) as TextScript;
+      router.push(`/scripts/${newScript.id}`);
     } catch (error) {
       console.error('Failed to create script:', error);
       setIsSubmitting(false);
@@ -61,12 +62,12 @@ export default function NewScript() {
               </Link>
             </Button>
           </div>
-          
+
           <div className="mb-6">
             <h1 className="text-2xl font-bold">Create New Script</h1>
             <p className="text-sm text-muted-foreground">Start a new text-to-speech script</p>
           </div>
-          
+
           <form onSubmit={handleSubmit} className="space-y-6 max-w-[600px]">
             <div className="space-y-2">
               <label htmlFor="name" className="text-sm font-medium">
@@ -80,7 +81,7 @@ export default function NewScript() {
                 required
               />
             </div>
-            
+
             <div className="space-y-2">
               <label htmlFor="description" className="text-sm font-medium">
                 Description
@@ -93,16 +94,12 @@ export default function NewScript() {
                 rows={4}
               />
             </div>
-            
+
             <div className="flex gap-4">
               <Button type="submit" disabled={isSubmitting || !name.trim()}>
                 {isSubmitting ? 'Creating...' : 'Create Script'}
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.push('/scripts')}
-              >
+              <Button type="button" variant="outline" onClick={() => router.push('/scripts')}>
                 Cancel
               </Button>
             </div>
@@ -111,4 +108,4 @@ export default function NewScript() {
       </div>
     </main>
   );
-} 
+}

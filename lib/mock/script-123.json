@@ -5,27 +5,27 @@
   "sections": [
     {
       "sectionId": "section-1",
-      "voiceId": "hellena-123",
+      "voiceId": "hellena",
       "content": "Are you looking for a digital marketing expert...?"
     },
     {
       "sectionId": "section-2",
-      "voiceId": "hellena-123",
+      "voiceId": "hellena",
       "content": "Discover social media marketing solutions that will help you grow your online presence!"
     },
     {
       "sectionId": "section-3",
-      "voiceId": "hellena-123",
+      "voiceId": "hellena",
       "content": "My name is Hellena and I represent a team dedicated to deliver concrete results that meets your brand's goals."
     },
     {
       "sectionId": "section-4",
-      "voiceId": "hellena-123",
+      "voiceId": "hellena",
       "content": "We are committed to:\n- optimizing your social media accounts\n- creating high quality content\n- increasing brand visibility and awareness\nand an endless pool of design services!"
     },
     {
       "sectionId": "section-5",
-      "voiceId": "hellena-123",
+      "voiceId": "hellena",
       "content": "Contact me now! and discover what we can do for your business!"
     }
   ]

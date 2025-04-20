@@ -1,141 +1,251 @@
 'use client';
 
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { PlayCircle, Download, X, Zap } from 'lucide-react';
-import { Slider } from '@/components/ui/slider';
-import { useState } from 'react';
+import { PlayCircle, Trash2, AudioLines, Loader2, RefreshCcwDot } from 'lucide-react';
+import { useTextScript, type TextScriptBlock as TextScriptBlockType } from './script-provider';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { playAudio } from './client.utils';
+// Voice options available for selection
+const voices = [{ id: 'default', name: 'Default' }];
 
-export function ScriptEditor() {
-  // const [speed, setSpeed] = useState(1.0);
+// TextScriptBlock component for displaying and editing text blocks
+export function TextScriptBlock({
+  currentBlock,
+}: {
+  currentBlock: TextScriptBlockType;
+}) {
+  const { activeBlockId, setActiveBlockId, removeBlock, updateBlock, generateAudio } =
+    useTextScript();
 
-  return (
-    <div className="flex-1 overflow-auto">
-      <div className="max-w-[900px] mx-auto p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold">Marketing Script</h1>
-            <p className="text-sm text-muted-foreground">512 characters</p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="secondary">Generate All</Button>
-            <Button variant="secondary">Export</Button>
-          </div>
-        </div>
+  const isEditing = activeBlockId === currentBlock.id;
+  const currentVoice = voices.find((v) => v.id === currentBlock.voice) ?? voices[0];
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const shouldDisablePlayButton =
+    isSpeaking || isGenerating || !currentBlock.text.trim() || !currentBlock?.url;
+  const [audioData, setAudioData] = useState<string | null>(currentBlock.audioData ?? null);
+  const scriptTextRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-        <div className="space-y-6">
-          <ScriptBlock voice="Giss" text="Are you looking for a digital marketing expert...?" />
-          <ScriptBlock
-            voice="Giss"
-            text="Discover social media marketing solutions that will help you grow your online presence!"
-          />
-          <div className="relative">
-            <ScriptBlock
-              voice="Giss"
-              text="My name is Jiz Mojeha and I represent a team dedicated to deliver concrete results that meets your brand's goals."
-              showVoiceOptions
-            />
-          </div>
-          <ScriptBlock
-            voice="Giss"
-            text={`We are committed to:
-            - optimizing your social media accounts
-            - creating high quality content
-            - increasing brand visibility and awareness
-            and an endless pool of design services!`}
-          />
-          <ScriptBlock
-            voice="Giss"
-            text="Contact me now! and discover what we can do for your business!"
-          />
-        </div>
-      </div>
-    </div>
+  // Focus the textarea when entering edit mode
+  useEffect(() => {
+    if (isEditing && textareaRef.current) {
+      // Use setTimeout to ensure DOM is fully rendered
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.focus();
+          const textLength = textareaRef.current.value.length;
+          textareaRef.current.setSelectionRange(textLength, textLength);
+        }
+      }, 0);
+    }
+  }, [isEditing]);
+
+  // Handle exit edit mode
+  const exitEditMode = useCallback(() => {
+    if (activeBlockId === currentBlock.id) {
+      setActiveBlockId('');
+    }
+  }, [currentBlock.id, activeBlockId, setActiveBlockId]);
+
+  // Handle clicks outside to exit edit mode
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!isEditing) return;
+
+      const target = event.target as HTMLElement;
+
+      // Exit edit mode only if:
+      // 1. We have a valid ref to the script text container
+      // 2. The click was outside that container
+      // 3. The click wasn't on a dropdown or select element
+      if (scriptTextRef.current && !scriptTextRef.current.contains(target)) {
+        // Don't exit if clicking on select elements or dropdown components
+        const clickedOnSelect = Boolean(
+          target.closest('select') ||
+            target.closest('[role="combobox"]') ||
+            target.closest('[role="listbox"]') ||
+            target.closest('[data-radix-select-content]')
+        );
+
+        if (!clickedOnSelect) {
+          exitEditMode();
+        }
+      }
+    };
+
+    // Add click listener when editing
+    if (isEditing) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isEditing, exitEditMode]);
+
+  // Handle enter edit mode
+  const enterEditMode = useCallback(() => {
+    setActiveBlockId(currentBlock.id); // Set active block directly here
+  }, [currentBlock.id, setActiveBlockId]);
+
+  // Handle double click to enter edit mode
+  const handleDoubleClick = useCallback(() => {
+    if (!isEditing) {
+      enterEditMode();
+    }
+  }, [isEditing, enterEditMode]);
+
+  // Handle text changes
+  const handleTextChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      updateBlock(currentBlock.id, { text: e.target.value });
+    },
+    [currentBlock.id, updateBlock]
   );
-}
 
-function ScriptBlock({
-  voice,
-  text,
-  showVoiceOptions = false,
-}: { voice: string; text: string; showVoiceOptions?: boolean }) {
+  // Handle voice selection
+  const handleVoiceChange = useCallback(
+    (newVoice: string) => {
+      updateBlock(currentBlock.id, { voice: newVoice });
+    },
+    [currentBlock.id, updateBlock]
+  );
+
+  // Handle speaking mode
+  const handlePlayBtn = useCallback(() => {
+    if (!audioData && !currentBlock?.url) {
+      return;
+    }
+
+    const audioUrl = currentBlock?.url || String(audioData);
+    const isUrl = !!currentBlock?.url;
+    setIsSpeaking(true);
+    playAudio(audioUrl, isUrl)
+      .then(() => {
+        setIsSpeaking(false);
+      })
+      .catch(() => {
+        setIsSpeaking(false);
+      });
+  }, [audioData, currentBlock?.url]);
+
+  // Handle "Generate" button click
+  const handleGenerateClick = useCallback(async () => {
+    setIsGenerating(true);
+    try {
+      const newAudioData = await generateAudio(currentBlock.id);
+      await playAudio(newAudioData);
+      setAudioData(newAudioData);
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [currentBlock.id, generateAudio]);
+
+  // Handle block deletion
+  const handleDelete = useCallback(() => {
+    removeBlock(currentBlock.id);
+  }, [currentBlock.id, removeBlock]);
+
   return (
-    <>
-      {showVoiceOptions && <VoiceOptions />}
-      <div className="space-y-4">
-        <div className="flex items-start gap-4">
-          <div className="flex items-center gap-2 min-w-[80px]">
-            <span className="text-emerald-500">◑</span>
-            {voice}
-          </div>
-          <div className="flex-1">
-            <div className="bg-secondary/50 rounded-lg p-4">
-              <div className="flex items-start gap-4">
-                <Button size="icon" variant="ghost" className="mt-1">
-                  <PlayCircle className="h-5 w-5" />
-                </Button>
-                <p className="flex-1 whitespace-pre-line">{text}</p>
-              </div>
+    <div className="space-y-4">
+      <div className="flex items-start gap-4">
+        <div className="flex items-center gap-2 min-w-[80px] py-4">
+          <span className="text-emerald-500">
+            <AudioLines className="h-5 w-5" />
+          </span>
+          {currentVoice?.name}
+        </div>
+        <div className="flex-1" onDoubleClick={handleDoubleClick}>
+          <div ref={scriptTextRef} className="script-text bg-secondary/50 rounded-lg p-4">
+            <div className="flex items-start gap-4">
+              <Button variant="ghost" onClick={handlePlayBtn} disabled={shouldDisablePlayButton}>
+                {isSpeaking ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <PlayCircle className="w-5 h-5" />
+                )}
+              </Button>
+              {isEditing ? (
+                <textarea
+                  ref={textareaRef}
+                  className="flex-1 bg-transparent focus:outline-none text-gray-400"
+                  placeholder="Enter text here..."
+                  value={currentBlock.text}
+                  onChange={handleTextChange}
+                  rows={Math.max(2, currentBlock.text.split('\n').length)}
+                  maxLength={1000}
+                  disabled={isGenerating}
+                />
+              ) : (
+                <p className="flex-1 whitespace-pre-line select-none">
+                  {currentBlock.text || '(Empty block)'}
+                </p>
+              )}
+
+              <Button variant="ghost" onClick={handleDelete}>
+                <Trash2 className="w-5 h-5 hover:text-red-800" />
+              </Button>
             </div>
+
+            {isEditing && (
+              <div className="flex justify-between items-center gap-3 mt-3">
+                <div className="text-xs text-muted-foreground">
+                  {currentBlock.text.length}/1000 characters
+                </div>
+                <div className="flex items-center gap-2">
+                  <Select value={currentVoice.id} onValueChange={handleVoiceChange}>
+                    <SelectTrigger className="w-[140px] rounded-full px-4 bg-primary/80 text-primary-foreground">
+                      <AudioLines className="h-4 w-4 mr-2 text-emerald-500" />
+                      <SelectValue placeholder="Select voice" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-primary/80 text-primary-foreground">
+                      {voices.map((voiceOption) => (
+                        <SelectItem key={voiceOption.id} value={voiceOption.id}>
+                          {voiceOption.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {/* Generate audio button */}
+                  <Button
+                    variant="ghost"
+                    onClick={handleGenerateClick}
+                    disabled={isGenerating || !currentBlock.text.trim()}
+                  >
+                    {isGenerating ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <RefreshCcwDot className="w-5 h-5" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
-    </>
-  );
-}
-
-function VoiceOptions() {
-  return (
-    <div className="bg-card rounded-lg p-6 shadow-lg border border-border">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-medium">Pick your preferred version</h3>
-        <Button variant="secondary" className="bg-purple-600 hover:bg-purple-700">
-          Regenerate
-        </Button>
-      </div>
-
-      <div className="space-y-4">
-        <VoiceOption label="My name is Jiz Mojeha and (4)" selected />
-        <VoiceOption label="My name is Jiz Mojeha and (1)" />
-      </div>
-
-      <Button className="w-full mt-4 bg-emerald-500 hover:bg-emerald-600">
-        <Zap className="w-4 h-4 mr-2" />
-        Get Faster Generations
-      </Button>
-
-      <p className="text-sm text-muted-foreground mt-4">
-        <Zap className="w-4 h-4 inline mr-1" />
-        For faster generations, upgrade your plan.
-      </p>
-      <p className="text-sm text-muted-foreground mt-2">
-        Each sample is unique. Click on &quot;Regenerate&quot; to create multiple samples and select
-        the one you prefer.
-      </p>
     </div>
   );
 }
 
-function VoiceOption({ label, selected = false }: { label: string; selected?: boolean }) {
+// AddNewBlock component to add a new text block
+export function AddNewBlock() {
+  const { addBlock } = useTextScript();
+
   return (
-    <div className="flex items-center gap-4">
-      <input type="radio" className="w-4 h-4" checked={selected} onChange={() => {}} />
-      <div className="flex-1">
-        <div className="flex items-center gap-2 mb-2">
-          <Button size="icon" variant="ghost">
-            <PlayCircle className="h-4 w-4" />
-          </Button>
-          <div className="flex-1">
-            <Slider defaultValue={[70]} max={100} step={1} />
-          </div>
-          <Button size="icon" variant="ghost">
-            <Download className="h-4 w-4" />
-          </Button>
-          <Button size="icon" variant="ghost">
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-        <p className="text-sm text-muted-foreground">{label}</p>
-      </div>
+    <div className="flex justify-center items-center py-4">
+      <Button variant="outline" onClick={addBlock}>
+        Add new block
+      </Button>
     </div>
   );
 }

@@ -1,17 +1,14 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { ScriptService } from '@/lib/services/script.service';
+import { TextScriptService } from '@/lib/services/text-script.service';
 import type { CreateScriptDto } from '@/lib/types/script.type';
 
-export const dynamic = 'auto';
-
 // Initialize the script service
-let scriptService: ScriptService | null = null;
+let scriptService: TextScriptService | null = null;
 
 const getScriptService = async () => {
   if (!scriptService) {
-    scriptService = new ScriptService();
-    await scriptService.init();
+    scriptService = new TextScriptService();
   }
   return scriptService;
 };
@@ -20,7 +17,7 @@ const getScriptService = async () => {
 export async function GET() {
   try {
     const service = await getScriptService();
-    const scripts = await service.getAllScripts();
+    const scripts = await service.getAllVoiceScripts();
     return NextResponse.json(scripts);
   } catch (error) {
     console.error('Error fetching scripts:', error);
@@ -40,7 +37,7 @@ export async function POST(request: NextRequest) {
       sections: body.sections || [],
     };
 
-    const newScript = await service.createScript(createScriptDto);
+    const newScript = await service.createTextScript(createScriptDto);
     return NextResponse.json(newScript, { status: 201 });
   } catch (error) {
     console.error('Error creating script:', error);
