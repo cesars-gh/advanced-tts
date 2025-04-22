@@ -79,7 +79,9 @@ export default function NewScript() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
+                maxLength={100}
               />
+              <p className="text-xs text-muted-foreground">{name.length} / 100 characters</p>
             </div>
 
             <div className="space-y-2">
@@ -92,7 +94,9 @@ export default function NewScript() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={4}
+                maxLength={100}
               />
+              <p className="text-xs text-muted-foreground">{description.length} / 100 characters</p>
             </div>
 
             <div className="flex gap-4">

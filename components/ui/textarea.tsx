@@ -1,9 +1,9 @@
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';
+import { useRef, useEffect } from 'react';
 
-export interface TextareaProps
-  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
+export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className, ...props }, ref) => {
@@ -19,6 +19,47 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     );
   }
 );
+
 Textarea.displayName = 'Textarea';
 
-export { Textarea };
+interface AutoResizingTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
+const AutoResizingTextarea = React.forwardRef<HTMLTextAreaElement, AutoResizingTextareaProps>(
+  ({ value, onChange, ...props }, ref) => {
+    const internalRef = useRef<HTMLTextAreaElement | null>(null);
+    const textareaRef = (ref as React.RefObject<HTMLTextAreaElement>) || internalRef;
+
+    useEffect(() => {
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto'; // Reset height first
+        textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`; // Then set to scrollHeight
+      }
+    }, [textareaRef]);
+
+    const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto'; // Reset height first
+        textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`; // Then set to scrollHeight
+      }
+      onChange?.(e); // Call the parent onChange
+    };
+
+    return (
+      <textarea
+        {...props}
+        value={value}
+        onChange={handleChange}
+        ref={textareaRef}
+        rows={1}
+        style={{
+          overflow: 'hidden',
+          resize: 'none',
+          ...props.style,
+        }}
+      />
+    );
+  }
+);
+
+AutoResizingTextarea.displayName = 'AutoResizingTextarea';
+
+export { Textarea, AutoResizingTextarea };

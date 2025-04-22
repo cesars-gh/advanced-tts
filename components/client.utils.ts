@@ -1,23 +1,51 @@
 'use client';
 
-// Function that returns the base64 data from a url
-export async function getBase64FromUrl(url: string) {
-  const response = await fetch(url);
-  const blob = await response.blob();
-  return await blob.text();
-}
+import type { TextScript } from '@/lib/types/script.type';
 
-// Function to play an audio from base64 data or url
-export async function playAudio(audioSource: string, isUrl = false) {
-  try {
-    const audioData = isUrl ? audioSource : `data:audio/mp3;base64,${audioSource}`;
-    const audio = new Audio(audioData);
-    // wait until audio is finished playing
-    await audio.play();
-    await new Promise((resolve) => {
-      audio.addEventListener('ended', resolve);
-    });
-  } catch (error) {
-    console.error('Error playing audio:', error);
+/**
+ * API Utils *
+ */
+export const saveTextScript = async (script: TextScript) => {
+  if (!script.id) {
+    return;
   }
-}
+  const payload = {
+    name: script.name,
+    description: script.description,
+    sections: script.sections,
+    voice_id: script.voice_id,
+  };
+
+  try {
+    const response = await fetch(`/api/scripts/${script.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to save script');
+    }
+  } catch (error) {
+    console.error('Error saving script:', error);
+  }
+};
+
+/**
+ * Voice Utils *
+ */
+
+export const OPENAI_VOICES = [
+  'alloy',
+  'ash',
+  'ballad',
+  'coral',
+  'echo',
+  'fable',
+  'nova',
+  'onyx',
+  'sage',
+  'shimmer',
+];

@@ -2,14 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/sidebar';
-import { Button } from '@/components/ui/button';
-import { FileText, PlusCircle } from 'lucide-react';
-import Link from 'next/link';
+import { ScriptList } from '@/components/text-scripts/script-list';
+import { DeleteScriptAlert } from '@/components/text-scripts/delete-script-alert';
+import { UpdateScriptModal } from '@/components/text-scripts/update-script-modal';
 import type { TextScript } from '@/lib/types/script.type';
+import { toast } from 'sonner';
 
 export default function Scripts() {
   const [scripts, setScripts] = useState<TextScript[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [scriptToDelete, setScriptToDelete] = useState<TextScript | null>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [scriptToEdit, setScriptToEdit] = useState<TextScript | null>(null);
 
   useEffect(() => {
     const loadScripts = async () => {
@@ -30,59 +35,120 @@ export default function Scripts() {
     loadScripts();
   }, []);
 
+  const handleDeleteClick = (scriptId: string) => {
+    const script = scripts.find((s) => s.id === scriptId);
+    if (script) {
+      setScriptToDelete(script);
+      setDeleteDialogOpen(true);
+    }
+  };
+
+  const handleEditClick = (script: TextScript) => {
+    setScriptToEdit(script);
+    setEditModalOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!scriptToDelete) return;
+
+    try {
+      const response = await fetch(`/api/scripts/${scriptToDelete.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete script');
+      }
+
+      // Remove the deleted script from the state
+      setScripts(scripts.filter((script) => script.id !== scriptToDelete.id));
+      toast.success('Script deleted', {
+        description: 'Your script has been successfully deleted',
+      });
+    } catch (error) {
+      toast.error('Failed to delete script', {
+        description: 'Please try again later',
+      });
+      console.error('Error deleting script:', error);
+    } finally {
+      setDeleteDialogOpen(false);
+      setScriptToDelete(null);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setScriptToDelete(null);
+  };
+
+  const handleUpdateScript = async (scriptId: string, name: string, description: string) => {
+    try {
+      const response = await fetch(`/api/scripts/${scriptId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, description }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update script');
+      }
+
+      // Update the scripts state with the updated script
+      setScripts(
+        scripts.map((script) =>
+          script.id === scriptId ? { ...script, name, description } : script
+        )
+      );
+      toast.success('Script updated', {
+        description: 'Your script has been successfully updated',
+      });
+
+      return Promise.resolve();
+    } catch (error) {
+      toast.error('Failed to update script', {
+        description: 'Please try again later',
+      });
+      console.error('Error updating script:', error);
+      return Promise.reject(error);
+    }
+  };
+
+  const handleEditCancel = () => {
+    setEditModalOpen(false);
+    setScriptToEdit(null);
+  };
+
   return (
     <main className="flex h-screen">
       <Sidebar />
       <div className="flex-1 overflow-auto">
         <div className="max-w-[900px] mx-auto p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-2xl font-bold">Your Scripts</h1>
-              <p className="text-sm text-muted-foreground">Manage your text-to-speech scripts</p>
-            </div>
-            <Button asChild>
-              <Link href="/scripts/new">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                New Script
-              </Link>
-            </Button>
-          </div>
-
-          {loading ? (
-            <div className="flex justify-center p-8">
-              <p>Loading scripts...</p>
-            </div>
-          ) : scripts.length === 0 ? (
-            <div className="flex flex-col items-center justify-center p-12 text-center border border-dashed rounded-lg">
-              <FileText className="h-12 w-12 mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-medium mb-2">No scripts found</h3>
-              <p className="text-muted-foreground mb-4">Create your first script to get started.</p>
-              <Button asChild>
-                <Link href="/scripts/new">
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Create Script
-                </Link>
-              </Button>
-            </div>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2">
-              {scripts.map((script) => (
-                <Link 
-                  key={script.id} 
-                  href={`/scripts/${script.id}`}
-                  className="block border p-4 rounded-lg hover:bg-secondary/50 transition-colors"
-                >
-                  <h3 className="font-medium text-lg">{script.name}</h3>
-                  <p className="text-sm text-muted-foreground mb-2">{script.description}</p>
-                  <div className="flex items-center text-xs text-muted-foreground">
-                    <span>{script.sections.length} sections</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
+          <ScriptList
+            scripts={scripts}
+            loading={loading}
+            onDeleteScript={handleDeleteClick}
+            onEditScript={handleEditClick}
+          />
         </div>
       </div>
+
+      {scriptToDelete && (
+        <DeleteScriptAlert
+          isOpen={deleteDialogOpen}
+          scriptName={scriptToDelete.name}
+          onClose={handleDeleteCancel}
+          onConfirm={handleDeleteConfirm}
+        />
+      )}
+
+      <UpdateScriptModal
+        isOpen={editModalOpen}
+        script={scriptToEdit}
+        onClose={handleEditCancel}
+        onUpdate={handleUpdateScript}
+      />
     </main>
   );
-} 
+}

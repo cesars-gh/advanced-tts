@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
       name: body.name,
       description: body.description || '',
       sections: body.sections || [],
+      voice_id: 0,
     };
 
     const newScript = await service.createTextScript(createScriptDto);

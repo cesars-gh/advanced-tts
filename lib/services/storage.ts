@@ -18,7 +18,7 @@ export class Storage {
         secretAccessKey: process.env.CLIENT_AWS_ACCESS_KEY || '',
       },
     });
-    
+
     this.bucketName = process.env.CLIENT_AWS_S3_BUCKET || '';
     this.bucketUrl = process.env.CLIENT_AWS_S3_BUCKET_URL || '';
   }
@@ -33,7 +33,7 @@ export class Storage {
   async uploadFile(fileContent: string, fileName: string, metadata: FileMetadata): Promise<string> {
     // Convert base64 to buffer
     const buffer = Buffer.from(fileContent, 'base64');
-    
+
     const params = {
       Bucket: this.bucketName,
       Key: fileName,
@@ -43,6 +43,32 @@ export class Storage {
         voiceId: metadata.voiceId || '',
       },
       ContentEncoding: 'base64',
+    };
+
+    try {
+      await this.s3Client.send(new PutObjectCommand(params));
+      return `${this.bucketUrl}/${fileName}`;
+    } catch (error) {
+      console.error('Error uploading file to S3:', error);
+      throw new Error(`Failed to upload file to S3: ${(error as Error).message}`);
+    }
+  }
+
+  // Upload a file from arrayBuffer
+  async uploadFileFromArrayBuffer(
+    arrayBufferPromise: Promise<ArrayBuffer>,
+    fileName: string,
+    metadata?: FileMetadata
+  ): Promise<string> {
+    const buffer = Buffer.from(await arrayBufferPromise);
+    const params = {
+      Bucket: this.bucketName,
+      Key: fileName,
+      Body: buffer,
+      Metadata: {
+        duration: metadata?.duration?.toString() || '',
+        voiceId: metadata?.voiceId || '',
+      },
     };
 
     try {

@@ -2,44 +2,53 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { TTSService } from '@/lib/services/tts.service';
 import { Storage } from '@/lib/services/storage';
+import { VoicesService } from '@/lib/services/voice.service';
 
 export const maxDuration = 60;
 
 // Initialize services
 const ttsService = new TTSService();
 const storage = new Storage();
+const voicesService = new VoicesService();
 
 export async function POST(request: NextRequest) {
   try {
-    const { text } = await request.json();
+    const { text, voiceId } = await request.json();
 
-    // Validate request data
-    if (!text) {
-      return NextResponse.json({ error: 'Text is required' }, { status: 400 });
+    // Validations
+    if (!text || !voiceId) {
+      return NextResponse.json({ error: 'Text and voiceId are required' }, { status: 400 });
+    }
+
+    const voice = await voicesService.getVoiceById(voiceId);
+    if (!voice) {
+      return NextResponse.json({ error: 'Voice not found' }, { status: 404 });
     }
 
     // Create a unique filename
+    let finalUrl = '';
     const fileName = `${text.slice(0, 10).replace(/[^a-zA-Z0-9]/g, '')}-${Date.now()}.mp3`;
-    console.log('fileName:', fileName);
+    console.log('Generating audio for:', fileName);
 
-    // Generate audio data
-    const generation = await ttsService.generateAudio(text);
-    const { audio, duration } = generation.generations[0];
+    if (voice.provider === 'openai') {
+      const response = await ttsService.generateAudioWithOpenAI(text, voice);
+      console.log('Audio generated, uploading to S3...');
+      finalUrl = await storage.uploadFileFromArrayBuffer(response.arrayBuffer(), fileName);
+    }
 
-    console.log('Audio generated, uploading to S3...');
+    if (voice.provider === 'hume') {
+      const response = await ttsService.generateAudioWithHume(text, voice);
+      const { audio, duration } = response.generations[0];
+      console.log('Audio generated, uploading to S3...');
+      finalUrl = await storage.uploadFile(audio, fileName, {
+        duration,
+      });
+    }
 
-    // Upload audio data to S3
-    const url = await storage.uploadFile(audio, fileName, {
-      duration,
-    });
-
-    console.log('Audio uploaded to S3:', url);
-    // Return audio data
+    console.log('Audio uploaded to S3:', finalUrl);
+    // Return audio url
     return NextResponse.json({
-      audioData: audio,
-      url,
-      format: 'mp3',
-      text,
+      url: finalUrl,
     });
   } catch (error) {
     console.error('TTS API error:', error);

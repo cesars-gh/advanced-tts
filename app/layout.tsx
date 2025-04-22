@@ -2,12 +2,12 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
-
+import { Toaster } from '@/components/ui/sonner';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'Voice Studio - Text to Speech Generator',
-  description: 'Professional text to speech generator with voice cloning capabilities'
+  description: 'Professional text to speech generator with voice cloning capabilities',
 };
 
 export default function RootLayout({
@@ -20,6 +20,7 @@ export default function RootLayout({
       <body className={`${inter.className} dark`}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           {children}
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

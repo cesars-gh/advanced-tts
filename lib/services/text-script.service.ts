@@ -2,7 +2,7 @@ import type { TextScript, CreateScriptDto, UpdateScriptDto } from '../types/scri
 import { supabaseClient } from '@/lib/supabaseClient';
 
 export class TextScriptService {
-  private tableName = 'voice_scripts';
+  private tableName = 'text_scripts';
 
   // Create a new script
   async createTextScript(createScriptDto: CreateScriptDto): Promise<TextScript> {
@@ -10,6 +10,7 @@ export class TextScriptService {
       name: createScriptDto.name,
       description: createScriptDto.description,
       sections: createScriptDto.sections || [],
+      voice_id: createScriptDto.voice_id,
     };
 
     const { data, error } = await supabaseClient
@@ -71,6 +72,7 @@ export class TextScriptService {
       name: updateScriptDto.name ?? existingScript.name,
       description: updateScriptDto.description ?? existingScript.description,
       sections: updateScriptDto.sections ?? existingScript.sections,
+      voice_id: updateScriptDto.voice_id ?? existingScript.voice_id,
     };
 
     const { data, error } = await supabaseClient
